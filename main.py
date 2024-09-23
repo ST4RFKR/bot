@@ -16,7 +16,7 @@ schedule_data = [
     {'date': '17.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 2"},
     {'date': '24.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 3"},
     {'date': '01.10.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 4"},
-    {'date': '23.09.2024', 'time': '23:43', 'title': "Тест отправки"},
+    {'date': '23.09.2024', 'time': '23:59', 'title': "Тест отправки уведомления"},
     {'date': '09.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 1"},
     {'date': '16.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 2"},
     {'date': '23.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 3"},
@@ -111,27 +111,29 @@ async def notify_about_event(application, chat_id, event):
     try:
         logger.info(f"Sending notification for event: {event['title']} to chat_id: {chat_id}")
         
-        if "JS" in event['title']:
+        # Преобразуем время события в московский часовой пояс
+        event_datetime_moscow = event_datetime.astimezone(tz)
+
+        if event['title'] == "Занятие по JS":
             message = (
                 f"🌟 **Занятие по JavaScript!** 🚀\n"
-                f"🗓️ Дата: {event['date']}\n"
-                f"⏰ Время: {event['time']}\n"
+                f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
+                f"⏰ Время: {event_datetime_moscow.strftime('%H:%M')}\n"
                 f"📚 Готовьтесь к увлекательному погружению в мир JS! 💻✨"
             )
-        elif "React" in event['title']:
+        elif event['title'] == "Занятие по React":
             message = (
                 f"⚛️ **Занятие по React!** 🌐\n"
-                f"🗓️ Дата: {event['date']}\n"
-                f"⏰ Время: {event['time']}\n"
+                f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
+                f"⏰ Время: {event_datetime_moscow.strftime('%H:%M')}\n"
                 f"🌟 Давайте создадим потрясающие интерфейсы вместе! 🎉💻"
             )
         else:
-            message = f"Напоминание: через 5 минут начнётся '{event['title']}' в {event['time']}!"
+            message = f"Напоминание: через 30 минут начнётся '{event['title']}' в {event_datetime_moscow.strftime('%H:%M')}!"
         
         await application.bot.send_message(chat_id=chat_id, text=message)
     except Exception as e:
         logger.error(f"Failed to send notification: {e}")
-
 # Функция проверки времени для уведомлений
 async def check_schedule(context: CallbackContext):
     application = context.application
@@ -143,13 +145,13 @@ async def check_schedule(context: CallbackContext):
         event_datetime = datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M').astimezone(tz)
         logger.info(f"Event '{event['title']}' datetime: {event_datetime}")
 
+        # Если до начала события осталось 30 минут или меньше и уведомление еще не отправлено
         if not event.get('notified') and now + timedelta(minutes=5) >= event_datetime > now:
             logger.info(f"Sending notification for event '{event['title']}'")
             await notify_about_event(application, chat_id, event)
-            event['notified'] = True
+            event['notified'] = True  # Отмечаем, что уведомление было отправлено
         elif event_datetime <= now:
-            event['notified'] = False
-
+            event['notified'] = False  #
 # Функция для получения следующего занятия
 async def next_event_command(update: Update, context: CallbackContext):
     now = datetime.now(tz)  # Получаем текущее время с учетом часового пояса
