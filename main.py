@@ -16,7 +16,7 @@ schedule_data = [
     {'date': '17.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 2"},
     {'date': '24.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 3"},
     {'date': '01.10.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 4"},
-    {'date': '23.09.2024', 'time': '23:40', 'title': "Тест отправки"},
+    {'date': '23.09.2024', 'time': '23:43', 'title': "Тест отправки"},
     {'date': '09.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 1"},
     {'date': '16.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 2"},
     {'date': '23.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 3"},
@@ -204,7 +204,7 @@ async def start(update: Update, context: CallbackContext):
     await update.message.reply_text('Добро пожаловать! Нажмите на кнопку, чтобы увидеть расписание.', reply_markup=reply_markup)
 
 if __name__ == '__main__':
-    TOKEN = 'YOUR_TOKEN_HERE'
+    TOKEN = '7728288925:AAGF00CJj_u7hD5vn2Qh7hWXpT-iPtJvWxY'
     GROUP_CHAT_ID = -1002238351805  # Замени на ID твоей группы
 
     # Создание бота
