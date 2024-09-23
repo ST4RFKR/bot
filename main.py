@@ -16,7 +16,7 @@ schedule_data = [
     {'date': '24.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 3"},
     {'date': '01.10.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 4"},
     {'date': '01.10.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 4"},
-    {'date': '23.09.2024', 'time': '23:41', 'title': "Тест отправки"},
+    {'date': '23.09.2024', 'time': '23:25', 'title': "Тест отправки"},
 
 
     {'date': '09.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 1"},
@@ -167,7 +167,7 @@ async def check_schedule(context: CallbackContext):
         logger.info(f"Event '{event['title']}' datetime: {event_datetime}")
 
         # Если до начала события осталось 30 минут или меньше и уведомление еще не отправлено
-        if not event.get('notified') and now + timedelta(minutes=30) >= event_datetime > now:
+        if not event.get('notified') and now + timedelta(minutes=5) >= event_datetime > now:
             logger.info(f"Sending notification for event '{event['title']}'")
             await notify_about_event(application, chat_id, event)
             event['notified'] = True  # Отмечаем, что уведомление было отправлено
