@@ -1,3 +1,4 @@
+# Импортируем необходимые библиотеки
 import asyncio
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -15,20 +16,15 @@ schedule_data = [
     {'date': '17.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 2"},
     {'date': '24.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 3"},
     {'date': '01.10.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 4"},
-    {'date': '01.10.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 4"},
-    {'date': '23.09.2024', 'time': '23:25', 'title': "Тест отправки"},
-
-
+    {'date': '23.09.2024', 'time': '23:40', 'title': "Тест отправки"},
     {'date': '09.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 1"},
     {'date': '16.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 2"},
     {'date': '23.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 3"},
     {'date': '30.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 4"},
-
 ]
 
 # Часовой пояс
 tz = pytz.timezone('Europe/Moscow')
-
 
 # Команда для просмотра расписания
 async def schedule_command(update: Update, context: CallbackContext):
@@ -67,17 +63,15 @@ async def handle_message(update: Update, context: CallbackContext):
             context.user_data.clear()  # Очистка состояния после завершения добавления
 
 # Функция для отображения расписания
-# Функция для отображения расписания (с исключением прошедших занятий)
 async def show_schedule(update: Update):
-    now = datetime.now(tz)  # Текущее время
-    # Сортируем расписание по дате и времени, исключая прошедшие занятия
+    now = datetime.now(tz)  # Текущее время с учетом часового пояса
     sorted_schedule = sorted(
         [event for event in schedule_data if datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M').astimezone(tz) > now],
-        key=lambda x: datetime.strptime(f"{x['date']} {x['time']}", '%d.%m.%Y %H:%M')
+        key=lambda x: datetime.strptime(f"{x['date']} {x['time']}", '%d.%m.%Y %H:%M').astimezone(tz)
     )
 
     if sorted_schedule:
-        message = "📅 Расписание предстоящих занятий на месяц:\n \n"
+        message = "📅 Расписание предстоящих занятий на месяц:\n\n"
         for event in sorted_schedule:
             if "JS" in event['title']:
                 message += (
@@ -105,7 +99,7 @@ async def help_command(update: Update, context: CallbackContext):
     help_text = (
         "Доступные команды:\n"
         "/start - Ниже есть кнопка показать расписание или используйте команду /schedule\n"
-        "/next - Следующее занятие"
+        "/next - Следующее занятие\n"
         "/schedule - Показать расписание занятий на месяц\n"
         "/help - Показать список команд и их описание\n"
         "/add - Добавить новое занятие в расписание (только для администраторов)\n"
@@ -117,14 +111,14 @@ async def notify_about_event(application, chat_id, event):
     try:
         logger.info(f"Sending notification for event: {event['title']} to chat_id: {chat_id}")
         
-        if event['title'] == "Занятие по JS":
+        if "JS" in event['title']:
             message = (
                 f"🌟 **Занятие по JavaScript!** 🚀\n"
                 f"🗓️ Дата: {event['date']}\n"
                 f"⏰ Время: {event['time']}\n"
                 f"📚 Готовьтесь к увлекательному погружению в мир JS! 💻✨"
             )
-        elif event['title'] == "Занятие по React":
+        elif "React" in event['title']:
             message = (
                 f"⚛️ **Занятие по React!** 🌐\n"
                 f"🗓️ Дата: {event['date']}\n"
@@ -132,29 +126,13 @@ async def notify_about_event(application, chat_id, event):
                 f"🌟 Давайте создадим потрясающие интерфейсы вместе! 🎉💻"
             )
         else:
-            message = f"Напоминание: через 30 минут начнётся '{event['title']}' в {event['time']}!"
+            message = f"Напоминание: через 5 минут начнётся '{event['title']}' в {event['time']}!"
         
         await application.bot.send_message(chat_id=chat_id, text=message)
     except Exception as e:
         logger.error(f"Failed to send notification: {e}")
+
 # Функция проверки времени для уведомлений
-# async def check_schedule(context: CallbackContext):
-#     application = context.application
-#     chat_id = context.job.chat_id
-#     now = datetime.now(tz)
-#     logger.info(f"Checking schedule at {now}")
-
-#     for event in schedule_data:
-#         event_datetime = datetime.strptime(event['date'] + ' ' + event['time'], '%d.%m.%Y %H:%M').astimezone(tz)
-#         logger.info(f"Event '{event['title']}' datetime: {event_datetime}")
-
-#         if not event.get('notified') and now + timedelta(minutes=30) >= event_datetime > now:
-#             logger.info(f"Sending notification for event '{event['title']}'")
-#             await notify_about_event(application, chat_id, event)
-#             event['notified'] = True  # Отметим, что уведомление отправлено
-#         elif event_datetime <= now:
-#             event['notified'] = False  # Сбрасываем флаг, если событие прошло
-
 async def check_schedule(context: CallbackContext):
     application = context.application
     chat_id = context.job.chat_id
@@ -162,26 +140,21 @@ async def check_schedule(context: CallbackContext):
     logger.info(f"Checking schedule at {now}")
 
     for event in schedule_data:
-        # Преобразуем дату события в объект datetime с московским часовым поясом
         event_datetime = datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M').astimezone(tz)
         logger.info(f"Event '{event['title']}' datetime: {event_datetime}")
 
-        # Если до начала события осталось 30 минут или меньше и уведомление еще не отправлено
         if not event.get('notified') and now + timedelta(minutes=5) >= event_datetime > now:
             logger.info(f"Sending notification for event '{event['title']}'")
             await notify_about_event(application, chat_id, event)
-            event['notified'] = True  # Отмечаем, что уведомление было отправлено
+            event['notified'] = True
         elif event_datetime <= now:
-            event['notified'] = False  # Сбрасываем флаг уведомления для прошедших событий
-
+            event['notified'] = False
 
 # Функция для получения следующего занятия
-# Функция для получения следующего занятия (не показывать прошедшие занятия)
 async def next_event_command(update: Update, context: CallbackContext):
-    now = datetime.now(tz).astimezone(tz)  # Получаем текущее время с учетом часового пояса
+    now = datetime.now(tz)  # Получаем текущее время с учетом часового пояса
     logger.info("Команда /next получена.")
     
-    # Фильтруем только предстоящие события (те, что еще не начались)
     upcoming_events = [
         event for event in schedule_data
         if datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M').astimezone(tz) > now
@@ -190,13 +163,11 @@ async def next_event_command(update: Update, context: CallbackContext):
     logger.info(f"Предстоящие занятия: {upcoming_events}")
 
     if upcoming_events:
-        # Находим ближайшее предстоящее событие
         next_event = min(
             upcoming_events,
             key=lambda x: datetime.strptime(f"{x['date']} {x['time']}", '%d.%m.%Y %H:%M').astimezone(tz)
         )
         
-        # Формируем сообщение в зависимости от типа занятия
         if "JS" in next_event['title']:
             message = (
                 f"🌟 **Следующее занятие по JavaScript!** 🚀\n"
@@ -233,7 +204,7 @@ async def start(update: Update, context: CallbackContext):
     await update.message.reply_text('Добро пожаловать! Нажмите на кнопку, чтобы увидеть расписание.', reply_markup=reply_markup)
 
 if __name__ == '__main__':
-    TOKEN = '7728288925:AAGF00CJj_u7hD5vn2Qh7hWXpT-iPtJvWxY'
+    TOKEN = 'YOUR_TOKEN_HERE'
     GROUP_CHAT_ID = -1002238351805  # Замени на ID твоей группы
 
     # Создание бота
