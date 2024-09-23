@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 schedule_data = [
     {'date': '10.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 1"},
     {'date': '17.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 2"},
+    {'date': '24.09.2024', 'time': '00:45', 'title': "Занятие по JS - Спринт 1 Занятие 3"},
     {'date': '24.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 3"},
     {'date': '01.10.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 4"},
-    {'date': '24.09.2024', 'time': '00:07', 'title': "Тест отправки уведомления"},
     {'date': '09.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 1"},
     {'date': '16.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 2"},
     {'date': '23.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 3"},
@@ -117,14 +117,14 @@ async def notify_about_event(application, chat_id, event):
         event_datetime = datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M')
         event_datetime_moscow = tz_moscow.localize(event_datetime)
 
-        if event['title'] == "Занятие по JS":
+        if "JS" in event['title']:
             message = (
                 f"🌟 **Занятие по JavaScript!** 🚀\n"
                 f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
                 f"⏰ Время: {event_datetime_moscow.strftime('%H:%M')}\n"
                 f"📚 Готовьтесь к увлекательному погружению в мир JS! 💻✨"
             )
-        elif event['title'] == "Занятие по React":
+        elif "React" in event['title']:
             message = (
                 f"⚛️ **Занятие по React!** 🌐\n"
                 f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
@@ -132,7 +132,10 @@ async def notify_about_event(application, chat_id, event):
                 f"🌟 Давайте создадим потрясающие интерфейсы вместе! 🎉💻"
             )
         else:
-            message = f"Напоминание: через 30 минут начнётся '{event['title']}' в {event_datetime_moscow.strftime('%H:%M')}!"
+            message = (
+                f"💡 Напоминание: через 30 минут начнётся '{event['title']}' в "
+                f"{event_datetime_moscow.strftime('%H:%M')}!"
+            )
         
         await application.bot.send_message(chat_id=chat_id, text=message)
     except Exception as e:
@@ -150,7 +153,7 @@ async def check_schedule(context: CallbackContext):
         logger.info(f"Event '{event['title']}' datetime: {event_datetime_moscow}")
 
         # Проверяем, если до начала события осталось 30 минут или меньше и уведомление еще не отправлено
-        if not event.get('notified') and now + timedelta(minutes=5) >= event_datetime_moscow > now:
+        if not event.get('notified') and now + timedelta(minutes=30) >= event_datetime_moscow > now:
             logger.info(f"Sending notification for event '{event['title']}'")
             await notify_about_event(application, chat_id, event)
             event['notified'] = True  # Отмечаем, что уведомление было отправлено
