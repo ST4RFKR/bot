@@ -16,7 +16,7 @@ schedule_data = [
     {'date': '17.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 2"},
     {'date': '24.09.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 3"},
     {'date': '01.10.2024', 'time': '18:00', 'title': "Занятие по JS - Спринт 1 Занятие 4"},
-    {'date': '23.09.2024', 'time': '23:59', 'title': "Тест отправки уведомления"},
+    {'date': '24.09.2024', 'time': '00:07', 'title': "Тест отправки уведомления"},
     {'date': '09.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 1"},
     {'date': '16.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 2"},
     {'date': '23.09.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 3"},
@@ -107,12 +107,15 @@ async def help_command(update: Update, context: CallbackContext):
     await update.message.reply_text(help_text)
 
 # Функция для отправки уведомлений
+tz_moscow = pytz.timezone('Europe/Moscow')
+
 async def notify_about_event(application, chat_id, event):
     try:
         logger.info(f"Sending notification for event: {event['title']} to chat_id: {chat_id}")
         
         # Преобразуем время события в московский часовой пояс
-        event_datetime_moscow = event_datetime.astimezone(tz)
+        event_datetime = datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M')
+        event_datetime_moscow = tz_moscow.localize(event_datetime)
 
         if event['title'] == "Занятие по JS":
             message = (
@@ -134,24 +137,25 @@ async def notify_about_event(application, chat_id, event):
         await application.bot.send_message(chat_id=chat_id, text=message)
     except Exception as e:
         logger.error(f"Failed to send notification: {e}")
-# Функция проверки времени для уведомлений
+
 async def check_schedule(context: CallbackContext):
     application = context.application
     chat_id = context.job.chat_id
-    now = datetime.now(tz)  # Moscow timezone
+    now = datetime.now(tz_moscow)  # Текущее московское время
     logger.info(f"Checking schedule at {now}")
 
     for event in schedule_data:
-        event_datetime = datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M').astimezone(tz)
-        logger.info(f"Event '{event['title']}' datetime: {event_datetime}")
+        event_datetime = datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M')
+        event_datetime_moscow = tz_moscow.localize(event_datetime)  # Преобразуем в московский часовой пояс
+        logger.info(f"Event '{event['title']}' datetime: {event_datetime_moscow}")
 
-        # Если до начала события осталось 30 минут или меньше и уведомление еще не отправлено
-        if not event.get('notified') and now + timedelta(minutes=5) >= event_datetime > now:
+        # Проверяем, если до начала события осталось 30 минут или меньше и уведомление еще не отправлено
+        if not event.get('notified') and now + timedelta(minutes=5) >= event_datetime_moscow > now:
             logger.info(f"Sending notification for event '{event['title']}'")
             await notify_about_event(application, chat_id, event)
             event['notified'] = True  # Отмечаем, что уведомление было отправлено
-        elif event_datetime <= now:
-            event['notified'] = False  #
+        elif event_datetime_moscow <= now:
+            event['notified'] = False  # Сбрасываем флаг уведомления для прошедших событий 
 # Функция для получения следующего занятия
 async def next_event_command(update: Update, context: CallbackContext):
     now = datetime.now(tz)  # Получаем текущее время с учетом часового пояса
