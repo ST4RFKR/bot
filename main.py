@@ -214,6 +214,31 @@ async def start(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('Добро пожаловать! Нажмите на кнопку, чтобы увидеть расписание.', reply_markup=reply_markup)
 
+from telegram.ext import ChatMemberHandler
+
+# Функция приветствия новых пользователей
+async def greet_new_user(update: Update, context: CallbackContext):
+    new_members = update.message.new_chat_members  # Получаем список новых пользователей
+    for member in new_members:
+        if not member.is_bot:  # Проверяем, что новый участник не бот
+            first_name = member.first_name  # Получаем имя нового участника
+            username = member.username if member.username else first_name  # Получаем username, если он есть
+            greeting_message = (
+                f"👋 Привет, {first_name}! Добро пожаловать в нашу группу! 🎉\n"
+                "Команды бота `/start - для получения расписания, /next - получить расписание на ближайший урок`"
+                "Если тебе что-то непонятно или нужна помощь, не стесняйся задавать вопросы! 💻✨"
+            )
+            await update.message.reply_text(greeting_message)  # Отправляем приветственное сообщение
+
+# Подключаем обработчик событий добавления новых участников
+if __name__ == '__main__':
+    ...
+
+
+
+
+
+
 if __name__ == '__main__':
     TOKEN = '7728288925:AAGF00CJj_u7hD5vn2Qh7hWXpT-iPtJvWxY'
     GROUP_CHAT_ID = -1002238351805  # Замени на ID твоей группы
@@ -229,6 +254,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("next", next_event_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))  # Один обработчик для всех шагов
     app.add_handler(CallbackQueryHandler(button_handler, pattern='show_schedule'))
+    app.add_handler(ChatMemberHandler(greet_new_user, ChatMemberHandler.CHAT_MEMBER))
 
     # Использование JobQueue для планирования регулярных проверок расписания
     job_queue = app.job_queue
