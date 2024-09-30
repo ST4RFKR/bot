@@ -102,7 +102,7 @@ async def help_command(update: Update, context: CallbackContext):
         "/next - Следующее занятие\n"
         "/schedule - Показать расписание занятий на месяц\n"
         "/help - Показать список команд и их описание\n"
-        "/add - Добавить новое занятие в расписание (только для администраторов)\n"
+        "/add - Добавить новое занятие в расписание (только для администраторов!)\n"
     )
     await update.message.reply_text(help_text)
 
