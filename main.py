@@ -5,6 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, CallbackQueryHandler, MessageHandler, filters
 from datetime import datetime, timedelta
 import pytz
+from telegram.ext import ChatMemberHandler, filters
 
 # Настройка логирования
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -225,20 +226,12 @@ async def greet_new_user(update: Update, context: CallbackContext):
             username = member.username if member.username else first_name  # Получаем username, если он есть
             greeting_message = (
                 f"👋 Привет, {first_name}! Добро пожаловать в нашу группу! 🎉\n"
-                "Команды бота `/start - для получения расписания, /next - получить расписание на ближайший урок`"
+                "Команды бота: `/start` - для получения расписания, `/next` - получить расписание на ближайший урок.\n"
                 "Если тебе что-то непонятно или нужна помощь, не стесняйся задавать вопросы! 💻✨"
             )
             await update.message.reply_text(greeting_message)  # Отправляем приветственное сообщение
 
 # Подключаем обработчик событий добавления новых участников
-if __name__ == '__main__':
-    ...
-
-
-
-
-
-
 if __name__ == '__main__':
     TOKEN = '7728288925:AAGF00CJj_u7hD5vn2Qh7hWXpT-iPtJvWxY'
     GROUP_CHAT_ID = -1002238351805  # Замени на ID твоей группы
@@ -254,7 +247,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("next", next_event_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))  # Один обработчик для всех шагов
     app.add_handler(CallbackQueryHandler(button_handler, pattern='show_schedule'))
-    app.add_handler(ChatMemberHandler(greet_new_user, ChatMemberHandler.CHAT_MEMBER))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, greet_new_user))
 
     # Использование JobQueue для планирования регулярных проверок расписания
     job_queue = app.job_queue
