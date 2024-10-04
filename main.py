@@ -26,6 +26,15 @@ schedule_data = [
     {'date': '03.10.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 3"},
     {'date': '04.10.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 1 Занятие 3"},
 
+      {'date': '08.10.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 2 Занятие 1"},
+    {'date': '09.10.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 2 (доп)"},
+    {'date': '15.10.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 2 Занятие 2"},
+    {'date': '16.10.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 2 (доп)"},
+    {'date': '18.10.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 2 (доп)"},
+    {'date': '22.10.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 2 Занятие 3"},
+    {'date': '29.10.2024', 'time': '18:00', 'title': "Занятие по React - Спринт 2 Занятие 4"},
+ 
+
 ]
 
 # Часовой пояс
@@ -68,16 +77,126 @@ async def handle_message(update: Update, context: CallbackContext):
             context.user_data.clear()  # Очистка состояния после завершения добавления
 
 # Функция для отображения расписания
-async def show_schedule(update: Update):
+# Функция для отображения расписания
+async def show_schedule(query):
     now = datetime.now(tz)  # Текущее время с учетом часового пояса
+    # Фильтруем расписание, оставляя только предстоящие занятия
+    upcoming_events = [
+        event for event in schedule_data
+        if datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M').astimezone(tz) > now
+    ]
+
+    if upcoming_events:
+        message = "📅 Расписание предстоящих занятий на месяц:\n\n"
+        for event in upcoming_events:
+            if "доп" in event['title']:
+                type_message = "📝 Это дополнительное занятие.\n"
+            else:
+                type_message = "📚 Это основное занятие.\n"
+
+            if "JS" in event['title']:
+                message += (
+                    f"🌟 **Занятие по JavaScript!** 🚀\n"
+                    f"{type_message}"
+                    f"🗓️ Дата: {event['date']}\n"
+                    f"⏰ Время: {event['time']}\n"
+                    f"📚 Готовьтесь к увлекательному погружению в мир JS! 💻✨\n\n"
+                )
+            elif "React" in event['title']:
+                message += (
+                    f"⚛️ **Занятие по React!** 🌐\n"
+                    f"{type_message}"
+                    f"🗓️ Дата: {event['date']}\n"
+                    f"⏰ Время: {event['time']}\n"
+                    f"🌟 Давайте создадим потрясающие интерфейсы вместе! 🎉💻\n\n"
+                )
+            else:
+                message += (
+                    f"{type_message}"
+                    f"🗓️ {event['date']} ⏰ {event['time']} - {event['title']}\n\n"
+                )
+    else:
+        message = "На данный момент занятий больше нет."
+
+    await query.edit_message_text(message)  # Правильное использование для редактирования сообщения
+
+# Функция для отображения только доп. или основных занятий
+async def show_filtered_schedule(update: Update, extra: bool):
+    now = datetime.now(tz)  # Текущее время с учетом часового пояса
+    
+    # Фильтруем только предстоящие занятия
     sorted_schedule = sorted(
         [event for event in schedule_data if datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M').astimezone(tz) > now],
         key=lambda x: datetime.strptime(f"{x['date']} {x['time']}", '%d.%m.%Y %H:%M').astimezone(tz)
     )
 
-    if sorted_schedule:
-        message = "📅 Расписание предстоящих занятий на месяц:\n\n"
-        for event in sorted_schedule:
+    if extra:
+        # Фильтруем только доп. занятия
+        filtered_schedule = [event for event in sorted_schedule if "доп" in event['title']]
+        message_title = "📅 Расписание доп. занятий:\n\n"
+    else:
+        # Фильтруем только основные занятия
+        filtered_schedule = [event for event in sorted_schedule if "доп" not in event['title']]
+        message_title = "📅 Расписание основных занятий:\n\n"
+
+    if filtered_schedule:
+        message = message_title
+        for event in filtered_schedule:
+            if "доп" in event['title']:
+                type_message = "📝 Это дополнительное занятие.\n"
+            else:
+                type_message = "📚 Это основное занятие.\n"
+
+            if "JS" in event['title']:
+                message += (
+                    f"🌟 **Занятие по JavaScript!** 🚀\n"
+                    f"{type_message}"
+                    f"🗓️ Дата: {event['date']}\n"
+                    f"⏰ Время: {event['time']}\n"
+                    f"📚 Готовьтесь к увлекательному погружению в мир JS! 💻✨\n\n"
+                )
+            elif "React" in event['title']:
+                message += (
+                    f"⚛️ **Занятие по React!** 🌐\n"
+                    f"{type_message}"
+                    f"🗓️ Дата: {event['date']}\n"
+                    f"⏰ Время: {event['time']}\n"
+                    f"🌟 Давайте создадим потрясающие интерфейсы вместе! 🎉💻\n\n"
+                )
+            else:
+                message += (
+                    f"{type_message}"
+                    f"🗓️ {event['date']} ⏰ {event['time']} - {event['title']}\n\n"
+                )
+    else:
+        message = "На данный момент занятий больше нет."
+
+    await update.message.edit_text(message)  # Правильное использование для редактирования сообщения
+
+
+
+# Функция для отображения только доп. или основных занятий
+async def show_filtered_schedule(update: Update, extra: bool):
+    now = datetime.now(tz)  # Текущее время с учетом часового пояса
+    
+    # Фильтруем только предстоящие занятия
+    sorted_schedule = sorted(
+        [event for event in schedule_data if datetime.strptime(f"{event['date']} {event['time']}", '%d.%m.%Y %H:%M').astimezone(tz) > now],
+        key=lambda x: datetime.strptime(f"{x['date']} {x['time']}", '%d.%m.%Y %H:%M').astimezone(tz)
+    )
+
+    if extra:
+        # Фильтруем только доп. занятия
+        filtered_schedule = [event for event in sorted_schedule if "доп" in event['title']]
+        message_title = "📅 Расписание доп. занятий:\n\n"
+    else:
+        # Фильтруем только основные занятия
+        filtered_schedule = [event for event in sorted_schedule if "доп" not in event['title']]
+        message_title = "📅 Расписание основных занятий:\n\n"
+
+    if filtered_schedule:
+        message = message_title
+        for event in filtered_schedule:
             if "JS" in event['title']:
                 message += (
                     f"🌟 **Занятие по JavaScript!** 🚀\n"
@@ -97,7 +216,7 @@ async def show_schedule(update: Update):
     else:
         message = "На данный момент занятий больше нет."
 
-    await update.message.reply_text(message)
+    await update.message.edit_text(message)  # Правильное использование для редактирования сообщения
 
 # Команда для вывода списка команд
 async def help_command(update: Update, context: CallbackContext):
@@ -114,6 +233,7 @@ async def help_command(update: Update, context: CallbackContext):
 # Функция для отправки уведомлений
 tz_moscow = pytz.timezone('Europe/Moscow')
 
+# Функция для отправки уведомлений
 async def notify_about_event(application, chat_id, event):
     try:
         logger.info(f"Sending notification for event: {event['title']} to chat_id: {chat_id}")
@@ -123,21 +243,39 @@ async def notify_about_event(application, chat_id, event):
         event_datetime_moscow = tz_moscow.localize(event_datetime)
 
         if "JS" in event['title']:
-            message = (
-                f"💡 Напоминание: через 30 минут начнётся:\n"
-                f"🌟 **Занятие по JavaScript!** 🚀\n"
-                f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
-                f"⏰ Время: {event_datetime_moscow.strftime('%H:%M')}\n"
-                f"📚 Готовьтесь к увлекательному погружению в мир JS! 💻✨"
-            )
+            if "доп" in event['title']:
+                message = (
+                    f"💡 Напоминание: через 30 минут начнётся:\n"
+                    f"🌟 **Дополнительное занятие по JavaScript!** 🚀\n"
+                    f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
+                    f"⏰ Время: {event_datetime_moscow.strftime('%H:%M')}\n"
+                    f"📚 Готовьтесь к увлекательному погружению в мир JS! 💻✨"
+                )
+            else:
+                message = (
+                    f"💡 Напоминание: через 30 минут начнётся:\n"
+                    f"🌟 **Основное занятие по JavaScript!** 🚀\n"
+                    f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
+                    f"⏰ Время: {event_datetime_moscow.strftime('%H:%M')}\n"
+                    f"📚 Готовьтесь к увлекательному погружению в мир JS! 💻✨"
+                )
         elif "React" in event['title']:
-            message = (
-                f"💡 Напоминание: через 30 минут начнётся:\n"
-                f"⚛️ **Занятие по React!** 🌐\n"
-                f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
-                f"⏰ Время: {event_datetime_moscow.strftime('%H:%M')}\n"
-                f"🌟 Давайте создадим потрясающие интерфейсы вместе! 🎉💻"
-            )
+            if "доп" in event['title']:
+                message = (
+                    f"💡 Напоминание: через 30 минут начнётся:\n"
+                    f"⚛️ **Дополнительное занятие по React!** 🌐\n"
+                    f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
+                    f"⏰ Время: {event_datetime_moscow.strftime('%H:%M')}\n"
+                    f"🌟 Давайте создадим потрясающие интерфейсы вместе! 🎉💻"
+                )
+            else:
+                message = (
+                    f"💡 Напоминание: через 30 минут начнётся:\n"
+                    f"⚛️ **Основное занятие по React!** 🌐\n"
+                    f"🗓️ Дата: {event_datetime_moscow.strftime('%d.%m.%Y')}\n"
+                    f"⏰ Время: {event_datetime_moscow.strftime('%H:%M')}\n"
+                    f"🌟 Давайте создадим потрясающие интерфейсы вместе! 🎉💻"
+                )
         else:
             message = (
                 f"💡 Напоминание: через 30 минут начнётся '{event['title']}' в "
@@ -206,18 +344,58 @@ async def next_event_command(update: Update, context: CallbackContext):
         await update.message.reply_text("Занятий больше нет.")
 
 # Функция для обработки нажатия на кнопку
+# Обработчик нажатий на кнопки
 async def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()
-    await show_schedule(query)
+    await query.answer()  # Обязательно нужно подтверждать callback запрос
+
+    # Обрабатываем нажатие на разные кнопки
+    if query.data == 'show_schedule':
+        await show_schedule(query)  # Передаем query
+    elif query.data == 'show_extra':
+        await show_filtered_schedule(query, extra=True)
+    elif query.data == 'show_main':
+        await show_filtered_schedule(query, extra=False)
+
+    query = update.callback_query
+    await query.answer()  # Обязательно нужно подтверждать callback запрос
+
+    # Обрабатываем нажатие на разные кнопки
+    if query.data == 'show_schedule':
+        await show_schedule(query)  # Pass query directly
+    elif query.data == 'show_extra':
+        await show_filtered_schedule(query, extra=True)
+    elif query.data == 'show_main':
+        await show_filtered_schedule(query, extra=False)
+# Функция для отображения только доп. или основных занятий
+# Функция для отображения только доп. или основных занятий
+from telegram import Update
+from telegram.ext import CallbackQueryHandler
+from datetime import datetime
 
 # Функция для создания кнопки
+# Обновляем команду /start для добавления новых кнопок
 async def start(update: Update, context: CallbackContext):
     keyboard = [
-        [InlineKeyboardButton("Показать расписание", callback_data='show_schedule')]
+        [InlineKeyboardButton("📅 Показать расписание", callback_data='show_schedule')],
+        [InlineKeyboardButton("🔧 Показать только доп", callback_data='show_extra')],
+        [InlineKeyboardButton("📚 Показать основные", callback_data='show_main')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text('Добро пожаловать! Нажмите на кнопку, чтобы увидеть расписание.', reply_markup=reply_markup)
+    await update.message.reply_text('Добро пожаловать! Выберите опцию ниже:', reply_markup=reply_markup)
+
+# Обработчик нажатий на кнопки
+async def button_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()  # Обязательно нужно подтверждать callback запрос
+
+    # Обрабатываем нажатие на разные кнопки
+    if query.data == 'show_schedule':
+        await show_schedule(query)  # Передаем сообщение
+    elif query.data == 'show_extra':
+        await show_filtered_schedule(query, extra=True)
+    elif query.data == 'show_main':
+        await show_filtered_schedule(query, extra=False)
 
 from telegram.ext import ChatMemberHandler
 
@@ -254,6 +432,10 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))  # Один обработчик для всех шагов
     app.add_handler(CallbackQueryHandler(button_handler, pattern='show_schedule'))
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, greet_new_user))
+
+# Добавляем обработчики для кнопок фильтрации
+    app.add_handler(CallbackQueryHandler(button_handler, pattern='show_extra'))
+    app.add_handler(CallbackQueryHandler(button_handler, pattern='show_main'))
 
     # Использование JobQueue для планирования регулярных проверок расписания
     job_queue = app.job_queue
